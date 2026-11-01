@@ -1,0 +1,3 @@
+# Local side only. The cluster job runs vLLM from a container.
+httpx>=0.27
+PyYAML>=6.0

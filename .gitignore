@@ -1,0 +1,18 @@
+__pycache__/
+*.pyc
+.DS_Store
+# withheld material, never to be added (see README)
+harness/out/
+harness/data/*
+!harness/data/codebook/
+harness/data/codebook/*
+!harness/data/codebook/codebook.csv
+harness/gen/vendor/
+harness/gen/vendor_company/
+harness/gen/translations/
+harness/gen/customers.py
+thesis-build/data/
+thesis-build/figures/
+thesis-build/tables/
+thesis-build/numbers.tex
+thesis-build/scripts/example_names.json

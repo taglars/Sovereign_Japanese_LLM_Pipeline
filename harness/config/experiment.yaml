@@ -1,0 +1,148 @@
+# The design. Everything the run and the analysis read comes from here.
+
+corpus:
+  # The 12 blind-sampled scripts.
+  rating_form: data/rating_form.html
+  blind_key: data/blind_key.csv
+  out: data/corpus.json
+
+judges:
+  # Families other than Qwen, which wrote the scripts, and OpenAI.
+  # GLM-4.7-Flash: BF16, 58 GiB, fits half an A100 node.
+  - name: glm-4.7-flash
+    hf_id: zai-org/GLM-4.7-Flash
+    dtype: auto
+    quantization: none
+    # BF16 needs no Hopper kernel, so the A100 partition is available.
+    tensor_parallel: 2
+    gpu_memory_utilization: 0.90
+    max_model_len: 32768
+    approx_weight_gib: 58
+    gated: false
+    partition: gpu_a100_il
+    mem: 400gb
+    time: "02:00:00"
+    extra_args:
+      - --trust-remote-code
+
+  # Not used: needs a vLLM nightly image, which failed to start.
+  - name: glm-5.3-flash
+    hf_id: zai-org/GLM-5.3-Flash
+    dtype: auto
+    # FP8, declared by the checkpoint.
+    quantization: fp8
+    tensor_parallel: 4
+    # 76.5 GiB of weights per card; 0.95 leaves ~12 GiB per card for the KV cache.
+    gpu_memory_utilization: 0.95
+    max_model_len: 32768
+    # Size on the hub.
+    approx_weight_gib: 306
+    gated: false
+    partition: gpu_h100
+    mem: 700gb
+    time: "02:00:00"
+    extra_args:
+      - --trust-remote-code
+      - --kv-cache-dtype
+      - fp8
+    # The architecture is not in vLLM 0.29.0 (see cluster/00_setup.sh).
+    needs_image: nightly
+
+  - name: deepseek-v4-flash
+    hf_id: deepseek-ai/DeepSeek-V4-Flash
+    # Compute dtype; the checkpoint declares its FP8 weights itself.
+    dtype: auto
+    # Not sent to vLLM; keeps the job off Ampere, which has no FP8 kernel.
+    quantization: fp8
+    tensor_parallel: 4
+    gpu_memory_utilization: 0.92
+    max_model_len: 32768
+    # Size on the hub. Hopper only.
+    approx_weight_gib: 149
+    gated: false
+    partition: gpu_h100
+    mem: 700gb
+    time: "02:00:00"
+    # From the vLLM recipe for this checkpoint. --trust-remote-code runs code
+    # from the checkpoint (the official deepseek-ai repository).
+    extra_args:
+      - --trust-remote-code
+      - --tokenizer-mode
+      - deepseek_v4
+      - --kv-cache-dtype
+      - fp8
+
+reference:
+  # The GPT-5.6 judge. Scores exported once; not re-runnable.
+  name: gpt-5.6-sol
+  rubric_lang: en
+  scores: data/judge_scores.xlsx
+
+# Short walltimes schedule sooner. A job that overruns is resubmitted; the store
+# skips filled cells.
+
+run:
+  rubric_langs: [en, ja]
+  # Per-script SE falls as 1/sqrt(k): 0.159 at k=3, 0.087 at k=10.
+  repeats: 10
+  # Repeats still vary at 0: batching changes the reduction order between calls.
+  temperature: 0.0
+  seed: 20260910
+  # vLLM rejects, not clamps, when prompt + max_tokens exceeds max_model_len.
+  # Longest prompt 10,757 tokens; real judgements stay below 6,500.
+  max_tokens: 20000
+  parallelism: 4
+  # Long Japanese judgements at 32 concurrent requests can take minutes.
+  request_timeout_seconds: 1200
+
+# --------------------------------------------------------------------------
+# Experiment 3: instruction language at generation.
+# Generators are served like judges but listed apart from them.
+
+generators:
+  - name: qwen3.8-27b
+    hf_id: Qwen/Qwen3.8-27B
+    dtype: auto
+    quantization: none
+    # 56 GiB fits one H100, so four replicas instead of tensor parallelism.
+    tensor_parallel: 1
+    data_parallel: 4
+    gpu_memory_utilization: 0.90
+    # Above the arm's 16384: the longest review prompt plus 8192 output tokens
+    # can pass 16k. Capacity only; outputs are unaffected.
+    max_model_len: 32768
+    approx_weight_gib: 56
+    gated: false
+    partition: gpu_h100
+    mem: 480gb
+    time: "04:00:00"
+    gpus: 4
+    # Hybrid model: the default max_num_seqs exceeds its per-sequence cache blocks
+    # and startup aborts. The runner sends at most 64 requests.
+    extra_args:
+      - --max-num-seqs
+      - "128"
+
+exp3:
+  model: Qwen/Qwen3.8-27B
+  customers: 100
+  # Same seed, same 100 customers.
+  seed: 20260924
+  # Chains in flight; beyond the cache vLLM queues, which is only slower.
+  workers: 64
+  request_timeout_seconds: 900
+  # Sampling of the Qwen3.8 arm (routing_qwen38_bf16.yaml), unchanged.
+  sampling:
+    temperature: 0.34
+    top_p: 0.9
+    top_k: -1
+    max_tokens: 8192
+    enable_thinking: false
+    system_prompt: /no_think
+    seed: 20260924
+  judging:
+    judges: [deepseek-v4-flash, glm-4.7-flash]
+    rubric_langs: [en, ja]
+    repeats: 3
+    # Below run.max_tokens: the longest prompt here is ~14,300 tokens.
+    max_tokens: 16000

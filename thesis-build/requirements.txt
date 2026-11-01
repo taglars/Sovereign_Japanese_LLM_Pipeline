@@ -1,0 +1,12 @@
+# For `make data numbers figures tables` here and the reports in ../harness.
+# Tested with Python 3.13.
+seaborn==0.13.2
+matplotlib==3.11.2
+numpy==2.5.3
+pandas==3.0.6
+PyYAML==6.0.3
+openpyxl==3.1.5
+fugashi==1.5.2
+unidic-lite==1.0.8
+# harness only (cluster client); not needed to rebuild the thesis
+httpx>=0.27

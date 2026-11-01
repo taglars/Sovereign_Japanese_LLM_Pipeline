@@ -1,0 +1,20 @@
+﻿id,kind,label,definition
+S_PERSONAL,strength,Personalised,"Uses this customer's own situation: industry, region, fleet, mileage, finance history, named company."
+S_FIGURES,strength,Concrete figures,"Specific numbers, calculations, savings, specifications that make the argument checkable."
+S_PRODUCT,strength,Product knowledge,"Explains features, packages or services clearly and correctly."
+S_STRUCTURE,strength,Structure and readability,"Well organised, easy to scan, sensible order, appropriate length."
+S_REGISTER,strength,Appropriate register,"Polite, natural business Japanese; honorifics used well."
+S_PERSUASION,strength,Persuasive framing,"Benefit-led, anticipates needs, builds a convincing case."
+W_KEIGO,weakness,Honorific errors,"Wrong or inconsistent keigo, plain form mixed in, double honorifics, wrong referent elevated."
+W_FLUENCY,weakness,Unnatural Japanese,"Awkward, translated-sounding or ungrammatical Japanese, odd word choice."
+W_GENERIC,weakness,Generic content,Boilerplate that would fit any customer; claimed personalisation that is not specific.
+W_ACCURACY,weakness,Accuracy or consistency,"Wrong or inconsistent facts or numbers, unsupported or exaggerated claims, internal contradictions."
+W_FORMAT,weakness,Format or language leakage,"Broken markup, leftover code fences, English or other non-Japanese text, labels or artefacts in the body."
+W_VERBOSE,weakness,Verbose or repetitive,"Too long, repeats the same point, filler."
+W_TONE,weakness,Wrong tone or audience,"Too pushy or too casual, addresses the wrong person, reads as instructions to the rep rather than a pitch."
+G_PRICE,gap,"Price, cost or financing detail","Missing price, quote, total cost, lease terms, payment or discount."
+G_NEXTSTEP,gap,Next step,"Missing call to action, proposal of a meeting, test drive, timeline."
+G_OBJECTION,gap,Objection handling,"A concern the customer would raise (cost, charging, reliability, change) that the script does not answer, or missing comparison with alternatives or competitors."
+G_PRODUCT,gap,Product or evidence detail,"Missing specifications, proof, references, case studies, warranty or service specifics."
+G_NODATA,gap,Customer data unavailable (confound),"The point is that the script lacks information about THIS customer (their needs, operations, current fleet) that the script could not have had. Reflects the setup, not the script."
+OTHER,other,Other,Fits none of the above.
